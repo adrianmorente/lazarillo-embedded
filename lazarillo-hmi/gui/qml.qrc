@@ -1,0 +1,9 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>Button_ChangeSkin.qml</file>
+        <file>FilteredIcon.qml</file>
+        <file>FooterMenu.qml</file>
+        <file>main.qml</file>
+    </qresource>
+</RCC>

@@ -1,35 +1,39 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.16)
 
-project(lazarillo-hmi VERSION 1.0.0 LANGUAGES CXX)
+project(lazarillo-hmi VERSION 0.1 LANGUAGES CXX)
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+find_package(Qt5 COMPONENTS Core Quick QuickControls2 Qml LinguistTools REQUIRED)
 
-find_package(Qt5 COMPONENTS Core Network Qml Quick QuickControls2 REQUIRED)
-find_package(Qt5LinguistTools)
+set(TS_FILES lazarillo-hmi_es_ES.ts)
 
-set(include_dir ${PROJECT_NAME}/include)
-set(sources
-    src/main.cpp
+set(PROJECT_SOURCES
+  src/utils/style.cpp
+  src/utils/style.h
+  src/main.cpp
+  gui/qml.qrc
+  gui/img.qrc
+  ${TS_FILES}
 )
 
-qt5_add_resources(QT_RESOURCES
-    gui/qml.qrc
-    lang.qrc
+qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  $<$<OR:$<CONFIG:Debug>,
+  $<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>
 )
 
-set(libraries
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Qml
-    Qt5::Quick
-    Qt5::QuickControls2
+target_link_libraries(${PROJECT_NAME} PRIVATE
+  Qt5::Core
+  Qt5::Quick
+  Qt5::QuickControls2
+  Qt5::Qml
 )
-
-target_link_libraries(${PROJECT_NAME} PRIVATE ${libraries})
-
-# TODO: install service file

@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>img/credits.txt</file>
+        <file>img/moon.png</file>
+        <file>img/sun.png</file>
+    </qresource>
+</RCC>
