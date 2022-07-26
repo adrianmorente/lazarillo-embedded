@@ -56,3 +56,7 @@ build/
 
 # VSCode stuff
 .vscode/
+
+# NodeJS stuff
+node_modules/
+package-lock.json

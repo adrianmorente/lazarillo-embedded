@@ -22,6 +22,7 @@ add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 message("\tPROJECT: ${PROJECT_NAME}")
 
 set(module_list
+  lazarillo-admin
   lazarillo-hmi
   web-gateway
 )
