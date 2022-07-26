@@ -1,23 +1,18 @@
-# Using clang-format-12
+# Using clang-format-10
 Language: Cpp
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: Consecutive
-AlignConsecutiveMacros: Consecutive
 AlignEscapedNewlines: Left
 AlignTrailingComments: true
 AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: true
-AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: true
-BitFieldColonSpacing: After
 BreakBeforeBraces: Allman
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
 BreakStringLiterals: true
-EmptyLineBeforeAccessModifier: Always
 FixNamespaceComments: true
 IncludeBlocks: Preserve
 IndentCaseLabels: false
@@ -32,7 +27,6 @@ SortUsingDeclarations: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
-SpaceBeforeCaseColon: false
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatements
