@@ -1,6 +1,6 @@
 project(lazarillo-hmi VERSION 0.1 LANGUAGES CXX)
 
-find_package(Qt5 COMPONENTS Core Quick QuickControls2 Qml LinguistTools REQUIRED)
+find_package(Qt5 COMPONENTS Core Quick QuickControls2 Qml LinguistTools Mqtt REQUIRED)
 
 set(TS_FILES lazarillo-hmi_es_ES.ts)
 
@@ -23,8 +23,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  service-base
   Qt5::Core
   Qt5::Quick
   Qt5::QuickControls2
   Qt5::Qml
+  Qt5::Mqtt
 )
