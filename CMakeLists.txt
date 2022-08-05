@@ -10,6 +10,7 @@ lzr_set_compilation_flags()
 
 # Particular installation of Qt5
 set(Qt5Core_DIR           "/usr/local/Qt/5.12.12/gcc_64/lib/cmake/Qt5Core")
+set(Qt5Qml_DIR            "/usr/local/Qt/5.12.12/gcc_64/lib/cmake/Qt5Qml")
 set(Qt5Quick_DIR          "/usr/local/Qt/5.12.12/gcc_64/lib/cmake/Qt5Quick")
 set(Qt5QuickControls2_DIR "/usr/local/Qt/5.12.12/gcc_64/lib/cmake/Qt5QuickControls2")
 set(Qt5LinguistTools_DIR  "/usr/local/Qt/5.12.12/gcc_64/lib/cmake/Qt5LinguistTools")
@@ -24,6 +25,7 @@ message("\tPROJECT: ${PROJECT_NAME}")
 
 set(module_list
   lazarillo-hmi
+  messages-definition
   service-base
   web-gateway
 )

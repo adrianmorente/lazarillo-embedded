@@ -23,6 +23,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+  messages-definition
   service-base
   Qt5::Core
   Qt5::Quick

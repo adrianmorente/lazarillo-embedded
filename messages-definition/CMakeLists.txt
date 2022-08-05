@@ -1,14 +1,24 @@
-project(messages-definition VERSION 1.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.16)
 
-set(PROJECTS_LIST
-    lazarillo-hmi
-    service-base
-    web-gateway
+project(messages-definition VERSION 1.0.0 LANGUAGES CXX)
+
+include(GNUInstallDirs)
+
+set(PROJECT_SOURCES
+    inc/base_message.h
+    inc/event_reboot.h
 )
 
-foreach(project ${PROJECTS_LIST})
-    message("Adding messages directory: ${project}")
-    add_subdirectory(inc/messages/${target})
-endforeach()
+add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/inc)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION 1
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE inc)
+
+install(TARGETS ${PROJECT_NAME}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
