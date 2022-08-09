@@ -17,7 +17,6 @@ print_help()
     echo "  [-c|--compile_mode (COMPILE_MODE|-h)]   - Compile mode (use -c -h for details)"
     echo "  [-h|--help]                             - Prints this message"
     echo "  [-j|-jJOBS|--jobs JOBS]                 - Number of parallel jobs to build"
-    echo "  [-V|--verbose]                          - Prints debug info on compiling"
     echo
 }
 
@@ -52,6 +51,18 @@ PARAMS=""
 # Start parsing the arguments
 while (( "$#" )); do
     case "$1" in
+        -h|--help)
+            print_help
+            exit 0
+            ;;
+        --clean)
+            CLEAN_BEFORE_BUILDING="TRUE"
+            shift 1
+            ;;
+        --cpack)
+            CPACK="TRUE"
+            shift 1
+            ;;
         -c|--compile_mode)
             if [ -n "$2" ]; then
                 if [ "${2:0:1}" != "-" ]; then
@@ -69,10 +80,6 @@ while (( "$#" )); do
                 print_compile_mode_help
                 exit 1
             fi
-            ;;
-        -h|--help)
-            print_help
-            exit 0
             ;;
         -j|--jobs)
             if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
@@ -108,14 +115,6 @@ while (( "$#" )); do
                 echo "Error: Argument for -jN is incorrect" >&2
                 exit 1
             fi
-        ;;
-        --clean)
-            CLEAN_BEFORE_BUILDING="TRUE"
-            shift 1
-            ;;
-        --cpack)
-            CPACK="TRUE"
-            shift 1
             ;;
     esac
 done
@@ -157,14 +156,6 @@ else
     CMAKE_BUILD_ARGUMENTS="$CMAKE_BUILD_ARGUMENTS -j$JOBS"
 fi
 
-# Clean build folder
-if [ -n "$CLEAN_BEFORE_BUILDING" ]; then
-    if [ -d "$BUILD_FOLDER" ]; then
-        print_debug "Cleaning $BUILD_FOLDER ..."
-        print_exe rm -rf "$BUILD_FOLDER"
-    fi
-fi
-
 # Set build folder is not set
 if [ -z "$BUILD_FOLDER" ]; then
     BUILD_FOLDER="build"
@@ -173,6 +164,13 @@ if [ -z "$BUILD_FOLDER" ]; then
         BUILD_FOLDER="${BUILD_FOLDER}_debug"
     elif [[ "$COMPILE_MODE" == "r" ]]; then
         BUILD_FOLDER="${BUILD_FOLDER}_release"
+    fi
+fi
+
+# Clean build folder if --clean
+if [ -n "$CLEAN_BEFORE_BUILDING" ]; then
+    if [ -d "$BUILD_FOLDER" ]; then
+        print_exe rm -rf "$BUILD_FOLDER"
     fi
 fi
 
@@ -189,6 +187,24 @@ if [ -n "$CLEAN_BEFORE_BUILDING" ] || [ -z "$(ls -A .)" ]; then
     fi
 else
     print_debug "Skipped cmake configuration. To avoid this, use --clean flag"
+fi
+
+print_exe cmake --build . -- "$CMAKE_BUILD_ARGUMENTS"
+
+# Generate deb if request
+if [ -n "$CPACK" ]; then
+    print_exe cpack
+    status=$?
+    if [[ $status -eq 0 ]]; then
+        if [ -n "$DEB" ]; then
+            DEB_FOLDER="../deb"
+            print_exe mkdir -p "$DEB_FOLDER"
+            print_exe mv *.deb "$DEB_FOLDER/"
+        fi
+    else
+        echo "Error generating deb: CPack command failed."
+        exit 1
+    fi
 fi
 
 print_exe cd "$CWD"

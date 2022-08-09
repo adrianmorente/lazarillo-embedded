@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(messages-definition VERSION 1.0.0 LANGUAGES CXX)
 
-include(GNUInstallDirs)
+find_package(Qt5 COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
     inc/base_message.h

@@ -2,10 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(service-base VERSION 1.0.0 LANGUAGES CXX)
 
-include(GNUInstallDirs)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(Mosquitto IMPORTED_TARGET libmosquitto REQUIRED)
+find_package(Qt5 COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
   inc/service_base.h
