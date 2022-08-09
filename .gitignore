@@ -55,7 +55,7 @@ compile_commands.json
 build/
 
 # VSCode stuff
-vscode/
+.vscode/
 
 # NodeJS stuff
 node_modules/

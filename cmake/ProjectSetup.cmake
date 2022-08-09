@@ -39,9 +39,6 @@ macro(lzr_set_compilation_flags)
 
 endmacro()
 
-macro(lzr_set_plog_definitions)
-endmacro(lzr_set_plog_definitions)
-
 macro(lzr_setup_qt)
 endmacro(lzr_setup_qt)
 
