@@ -30,18 +30,16 @@ set(Qt5Mqtt_DIR           "/usr/local/Qt-5.15.5/lib/cmake/Qt5Mqtt")
 set(Qt5WebSockets_DIR     "/usr/local/Qt-5.15.5/lib/cmake/Qt5WebSockets")
 set(QT_QMAKE_EXECUTABLE   "/usr/local/Qt-5.15.5/bin/qmake")
 
-project("lazarillo_sw")
-add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
-message("\tPROJECT: ${PROJECT_NAME}")
-
-set(module_list
+set(MODULE_LIST
   lazarillo-hmi
+  lazarillo-utils
   messages-definition
+  serialization
   service-base
   web-gateway
 )
 
-foreach (target ${module_list})
+foreach (target ${MODULE_LIST})
   message("Adding module: ${target}")
   add_subdirectory(${target})
 endforeach()
