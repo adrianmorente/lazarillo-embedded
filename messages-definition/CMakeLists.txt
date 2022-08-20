@@ -13,7 +13,6 @@ set(PROJECT_SOURCES
     ${_include_dir}/messages-definition/message_header.h
     ${_include_dir}/models/connection_status.h
     src/base_message.cpp
-    src/message_header.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})
