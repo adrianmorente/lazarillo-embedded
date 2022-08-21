@@ -1,7 +1,7 @@
 #ifndef LAZARILLO_HMI_INC_SERVICE_H
 #define LAZARILLO_HMI_INC_SERVICE_H
 
-#include "service-base/inc/service_base.h"
+#include "service-base/service_base.h"
 
 namespace lzr
 {

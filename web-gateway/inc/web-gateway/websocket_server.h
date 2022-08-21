@@ -4,25 +4,28 @@
 #include <QObject>
 #include <QTimer>
 #include <QWebSocket>
+#include <QWebSocketServer>
 
-class WebsocketClient : public QObject
+class WebsocketServer : public QObject
 {
     Q_OBJECT
+
 public:
-    explicit WebsocketClient(const QUrl &p_url, QObject *p_parent = nullptr);
+    explicit WebsocketServer(const int p_port  = 8080,
+                             QObject *p_parent = nullptr);
 
 private slots:
-    void connected();
-    void disconnected();
-    void messageReceived(QString p_message);
-    void heartbeat();
+    void onNewConnection();
+    void processTextMessage(QString message);
+    void processBinaryMessage(QByteArray message);
+    void socketDisconnected();
 
 signals:
     void closed();
 
 private:
     // Socket that holds the actual connection
-    QWebSocket m_socket;
+    QWebSocketServer *m_socket;
 
     // Timer for emitting a heartbeat periodically
     QTimer m_timer;

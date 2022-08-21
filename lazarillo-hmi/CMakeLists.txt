@@ -13,10 +13,14 @@ find_package(Qt5 COMPONENTS Core Quick QuickControls2 Qml LinguistTools REQUIRED
 
 set(TS_FILES lazarillo-hmi_es_ES.ts)
 
+set(_include_dir inc/lazarillo-hmi)
+
 set(PROJECT_SOURCES
+  ${_include_dir}/service.h
   src/utils/style.cpp
   src/utils/style.h
   src/main.cpp
+  src/service.cpp
   gui/qml.qrc
   gui/img.qrc
   ${TS_FILES}
@@ -36,4 +40,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   Qt5::Quick
   Qt5::QuickControls2
   Qt5::Qml
+  service-base
 )

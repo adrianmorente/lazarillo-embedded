@@ -1,4 +1,4 @@
-#include "inc/service.h"
+#include "lazarillo-hmi/service.h"
 
 using lzr::hmi::Service;
 

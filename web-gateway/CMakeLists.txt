@@ -2,10 +2,12 @@ project(web-gateway VERSION 0.1 LANGUAGES CXX)
 
 find_package(Qt5 COMPONENTS Core WebSockets REQUIRED)
 
+set(_include_dir inc/web-gateway)
+
 set(PROJECT_SOURCES
-  inc/websocket_client.h
+  ${_include_dir}/websocket_server.h
   src/main.cpp
-  src/websocket_client.cpp
+  src/websocket_server.cpp
   ${TS_FILES}
 )
 
@@ -14,6 +16,8 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   $<$<OR:$<CONFIG:Debug>
 )
+
+target_include_directories(${PROJECT_NAME} PUBLIC inc)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   messages-definition

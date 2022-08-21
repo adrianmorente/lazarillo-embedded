@@ -34,6 +34,7 @@ set(MODULE_LIST
   lazarillo-hmi
   lazarillo-utils
   messages-definition
+  # motor-manager
   serialization
   service-base
   web-gateway

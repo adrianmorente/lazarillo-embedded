@@ -1,13 +1,14 @@
 #include <QCoreApplication>
 
-#include "inc/websocket_client.h"
+#include "web-gateway/websocket_server.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    WebsocketClient socket(QUrl("ws://localhost:8080"));
-    QObject::connect(&socket, &WebsocketClient::closed,
-                     [=]() { qDebug() << "Socket closed"; });
+
+    auto server{new WebsocketServer(8080)};
+    // QObject::connect(server, &WebsocketServer::closed, &a,
+    // &QCoreApplication::quit);
 
     return a.exec();
 }
