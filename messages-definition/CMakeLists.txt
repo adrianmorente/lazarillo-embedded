@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(messages-definition VERSION 1.0.0 LANGUAGES CXX)
 
-find_package(Qt5 COMPONENTS Widgets)
-
 set(_include_dir inc)
 
 set(PROJECT_SOURCES
@@ -16,6 +14,8 @@ set(PROJECT_SOURCES
 )
 
 add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})
+
+lzr_link_qt(${PROJECT_NAME})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}

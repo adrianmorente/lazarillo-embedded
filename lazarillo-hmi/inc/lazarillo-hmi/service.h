@@ -12,16 +12,11 @@ class Service : public utils::ServiceBase
 public:
     Service(std::string const& p_name);
 
-    std::string get_name() override;
-
     void init() override;
 
     void run() override;
 
     void finish() override;
-
-private:
-    std::string m_name{""};
 };
 }
 }

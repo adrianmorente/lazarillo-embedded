@@ -36,11 +36,49 @@ macro(lzr_set_compilation_flags)
     else()
         add_compile_definitions(DEBUG)
     endif()
-
 endmacro()
 
+# Particular installation of Qt5
 macro(lzr_setup_qt)
+    set(Qt5DIR                "/usr/local/Qt-5.15.5/lib/cmake/Qt5")
+    set(Qt5Core_DIR           "/usr/local/Qt-5.15.5/lib/cmake/Qt5Core")
+    set(Qt5Qml_DIR            "/usr/local/Qt-5.15.5/lib/cmake/Qt5Qml")
+    set(Qt5Quick_DIR          "/usr/local/Qt-5.15.5/lib/cmake/Qt5Quick")
+    set(Qt5QuickControls2_DIR "/usr/local/Qt-5.15.5/lib/cmake/Qt5QuickControls2")
+    set(Qt5LinguistTools_DIR  "/usr/local/Qt-5.15.5/lib/cmake/Qt5LinguistTools")
+    set(Qt5Mqtt_DIR           "/usr/local/Qt-5.15.5/lib/cmake/Qt5Mqtt")
+    set(Qt5WebSockets_DIR     "/usr/local/Qt-5.15.5/lib/cmake/Qt5WebSockets")
+    set(QT_QMAKE_EXECUTABLE   "/usr/local/Qt-5.15.5/bin/qmake")
 endmacro(lzr_setup_qt)
+
+# Link Qt5 library to specified service
+function(lzr_link_qt service)
+    find_package(Qt5 COMPONENTS Core Mqtt Qml Quick QuickControls2 LinguistTools WebSockets REQUIRED)
+
+    target_include_directories(${service} PRIVATE ${QT5_INCLUDE_DIR})
+    target_link_libraries(${service} PRIVATE
+        Qt5::Core
+        Qt5::Mqtt
+        Qt5::Qml
+        Qt5::Quick
+        Qt5::QuickControls2
+        Qt5::WebSockets
+    )
+endfunction()
+
+# Link systemd library for the requested target
+function(lzr_link_systemd service)
+    target_link_libraries(${service} PRIVATE systemd)
+endfunction()
+
+# Creates the service file into the target device
+function(lzr_create_service service service_file)
+    lzr_link_systemd(${service})
+
+    # Install service file into systemd directory
+    set(SERVICES_DIR "/lib/systemd/system/")
+    install(FILES ${service_file} DESTINATION ${SERVICES_DIR})
+endfunction()
 
 macro(lzr_setup_cross)
 endmacro(lzr_setup_cross)

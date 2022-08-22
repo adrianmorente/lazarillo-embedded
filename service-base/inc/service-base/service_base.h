@@ -16,7 +16,7 @@ public:
   /**
    * Returns the name of the service
    */
-  virtual std::string get_name() = 0;
+  std::string get_name();
 
   /**
    * Does all the initialization tasks on start
@@ -32,6 +32,17 @@ public:
    * Terminates the service. Blocks until run returns
    */
   virtual void finish() = 0;
+
+protected:
+  // Unique name of the service
+  std::string m_name{""};
+
+private:
+  /**
+   * Private method used for initializing the messaging context, used by 
+   * inheriting children. 
+   */
+  void init_messaging();
 };
 }
 
