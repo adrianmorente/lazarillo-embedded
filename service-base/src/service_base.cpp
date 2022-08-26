@@ -1,6 +1,7 @@
 #include "service-base/service_base.h"
 
 #include <iostream>
+#include <systemd/sd-daemon.h>
 
 using utils::ServiceBase;
 
