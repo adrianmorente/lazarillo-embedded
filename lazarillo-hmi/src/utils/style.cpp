@@ -1,4 +1,4 @@
-#include "style.h"
+#include "lazarillo-hmi/utils/style.h"
 
 #include <QColor>
 #include <QDebug>

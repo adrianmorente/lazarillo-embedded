@@ -12,6 +12,7 @@ set(PROJECT_SOURCES
 add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})
 
 lzr_link_qt(${PROJECT_NAME})
+lzr_link_systemd(${PROJECT_NAME})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
   VERSION ${PROJECT_VERSION}

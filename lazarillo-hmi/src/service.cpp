@@ -1,28 +1,24 @@
 #include "lazarillo-hmi/service.h"
 
-#include <QGuiApplication>
+#include "lazarillo-hmi/utils/style.h"
+
 #include <QLocale>
+#include <QObject>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QTranslator>
 
 using lzr::hmi::Service;
+using lzr::utils::Style;
 
-Service::Service(std::string const &p_name)
-    : m_name{p_name}
+Service::Service(int argc, char *argv[])
 {
-}
-
-void Service::init() {}
-
-void Service::run()
-{
-    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
-
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QGuiApplication app(argc, argv);
-    app.setOrganizationName("Adrián Morente");
-    app.setOrganizationDomain("");
+    m_app = new QGuiApplication(argc, argv);
+    m_app->setOrganizationName("Adrián Morente");
+    m_app->setOrganizationDomain("");
+
+    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
@@ -31,15 +27,30 @@ void Service::run()
         const QString baseName = "lazarillo-hmi_" + QLocale(locale).name();
         if (translator.load(":/i18n/" + baseName))
         {
-            app.installTranslator(&translator);
+            m_app->installTranslator(&translator);
             break;
         }
     }
 
-    qmlRegisterUncreatableType<lzr::utils::Style>(
-        "lazarillo.utils", 1, 0, "Style", "Style enum type not creatable.");
-    qRegisterMetaType<const lzr::utils::Style *>("const Style");
+    qmlRegisterUncreatableType<Style>("lazarillo.utils", 1, 0, "Style",
+                                      "Style enum type not creatable.");
+    qRegisterMetaType<const Style *>("const Style");
+}
 
+Service::~Service()
+{
+    delete m_app;
+}
+
+std::string Service::get_name()
+{
+    return "lazarillo-hmi";
+}
+
+void Service::init() {}
+
+int Service::run_internal()
+{
     QQmlApplicationEngine engine;
     engine.addImportPath(":/");
 
@@ -50,7 +61,7 @@ void Service::run()
     // Finally create QML window
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(
-        &engine, &QQmlApplicationEngine::objectCreated, &app,
+        &engine, &QQmlApplicationEngine::objectCreated, m_app,
         [url](QObject *obj, const QUrl &objUrl)
         {
             if (!obj && url == objUrl)
@@ -59,7 +70,7 @@ void Service::run()
         Qt::QueuedConnection);
     engine.load(url);
 
-    return app.exec();
+    return m_app->exec();
 }
 
 void Service::finish() {}

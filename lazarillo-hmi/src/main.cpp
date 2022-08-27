@@ -1,11 +1,10 @@
 #include "lazarillo-hmi/service.h"
-#include "lazarillo-hmi/utils/style.h"
 
-using lzr::utils::Style;
+#include "service-base/service_base.h"
 
 int main(int argc, char *argv[])
 {
     auto service =
-        std::make_shared<utils::ServiceBase>("lazarillo-hmi", argc, argv);
+        std::make_shared<lzr::hmi::Service>(argc, argv);
     service->run();
 }

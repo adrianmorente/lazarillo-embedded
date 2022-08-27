@@ -3,22 +3,32 @@
 
 #include "service-base/service_base.h"
 
+#include <QGuiApplication>
+
 namespace lzr
 {
 namespace hmi
 {
-class Service : public utils::ServiceBase
+class Service : public lzr::service::ServiceBase
 {
 public:
-    Service(std::string const& p_name);
+    Service(int argc, char *argv[]);
+
+    ~Service();
+
+    std::string get_name() override;
 
     void init() override;
 
-    void run() override;
+    int run_internal() override;
 
     void finish() override;
+
+private:
+    //
+    QGuiApplication *m_app;
 };
-}
-}
+} // namespace hmi
+} // namespace lzr
 
 #endif // LAZARILLO_HMI_INC_SERVICE_H
