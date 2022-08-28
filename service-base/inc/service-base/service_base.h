@@ -1,7 +1,6 @@
 #ifndef SERVICE_BASE_INC_SERVICE_BASE_H
 #define SERVICE_BASE_INC_SERVICE_BASE_H
 
-#include <memory>
 #include <string>
 
 namespace lzr
