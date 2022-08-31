@@ -1,14 +1,14 @@
-#include "messages-definition/base_message.h"
+#include "messages-definition/i_base_message.h"
 
-using messages::BaseMessage;
+using messages::IBaseMessage;
 using messages::MessageHeader;
 
-void BaseMessage::setHeader(MessageHeader const &p_header)
+void IBaseMessage::setHeader(MessageHeader const &p_header)
 {
     m_header = std::make_shared<MessageHeader>(p_header);
 }
 
-MessageHeader BaseMessage::getHeader() const
+MessageHeader IBaseMessage::getHeader() const
 {
     MessageHeader header;
 
@@ -18,7 +18,7 @@ MessageHeader BaseMessage::getHeader() const
 }
 
 serialization::Serializer &
-    BaseMessage::serializePayload(serialization::Serializer &p_serializer) const
+    IBaseMessage::serializePayload(serialization::Serializer &p_serializer) const
 {
     return p_serializer;
 }

@@ -16,4 +16,18 @@ void ServiceBase::run()
     sd_notify(0, "STOPPED=1");
 }
 
+bool ServiceBase::publish(std::string const &p_topic,
+                          std::string const &p_message)
+{
+    return m_broker->publish(p_topic, p_message);
+}
+
+bool ServiceBase::subscribe(std::string const &p_topic,
+                            std::string const &p_message,
+                            std::shared_ptr<msg::IMsgReceiver> p_receiver)
+{
+    m_broker->subscribe(p_topic);
+    m_broker->add_receiver(p_message, std::move(p_receiver));
+}
+
 void ServiceBase::init_messaging() {}

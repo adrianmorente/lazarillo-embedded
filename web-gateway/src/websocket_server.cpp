@@ -29,6 +29,9 @@ void WebsocketServer::onNewConnection()
             &WebsocketServer::processBinaryMessage);
     connect(client, &QWebSocket::disconnected, this,
             &WebsocketServer::socketDisconnected);
+
+    qDebug() << "Client connected.";
+    client->sendTextMessage(QString::fromUtf8("Connection accepted from Websocket server"));
 }
 
 void WebsocketServer::processTextMessage(QString p_message)

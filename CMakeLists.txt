@@ -24,6 +24,7 @@ set(MODULE_LIST
   lazarillo-hmi
   lazarillo-utils
   messages-definition
+  messaging-broker
   # motor-manager
   serialization
   service-base

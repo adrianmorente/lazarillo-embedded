@@ -1,5 +1,5 @@
-#ifndef MESSAGES_DEFINITION_INC_BASE_MESSAGE_H
-#define MESSAGES_DEFINITION_INC_BASE_MESSAGE_H
+#ifndef MESSAGES_DEFINITION_INC_I_BASE_MESSAGE_H
+#define MESSAGES_DEFINITION_INC_I_BASE_MESSAGE_H
 
 #include "message_header.h"
 
@@ -19,14 +19,14 @@ namespace messages
  * std::string name() const must be overriden to contain the actual message
  * name.
  */
-class BaseMessage : public serialization::Serializable
+class IBaseMessage : public serialization::Serializable
 {
 public:
     /**
      * Destroy the Base Message object
      *
      */
-    virtual ~BaseMessage() = 0;
+    virtual ~IBaseMessage() = 0;
 
     /**
      * Returns the unique name of the implemented message
@@ -74,4 +74,4 @@ private:
 };
 } // namespace messages
 
-#endif // MESSAGES_DEFINITION_INC_BASE_MESSAGE_H
+#endif // MESSAGES_DEFINITION_INC_I_BASE_MESSAGE_H

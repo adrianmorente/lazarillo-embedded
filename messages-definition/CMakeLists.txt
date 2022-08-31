@@ -5,12 +5,12 @@ project(messages-definition VERSION 1.0.0 LANGUAGES CXX)
 set(_include_dir inc)
 
 set(PROJECT_SOURCES
-    ${_include_dir}/messages-definition/base_message.h
     ${_include_dir}/messages-definition/event_connection_status.h
     ${_include_dir}/messages-definition/event_reboot.h
+    ${_include_dir}/messages-definition/i_base_message.h
     ${_include_dir}/messages-definition/message_header.h
     ${_include_dir}/models/connection_status.h
-    src/base_message.cpp
+    src/i_base_message.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${PROJECT_SOURCES})

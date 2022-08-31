@@ -3,7 +3,7 @@
 
 #include "base_message.h"
 
-class EventReboot : public BaseMessage
+class EventReboot : public IBaseMessage
 {
 };
 

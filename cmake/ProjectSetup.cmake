@@ -54,6 +54,11 @@ macro(lzr_setup_qt)
     set(QT_QMAKE_EXECUTABLE   "/usr/local/Qt-5.15.5/bin/qmake")
 endmacro(lzr_setup_qt)
 
+# Link mosquitto dependency to specified service
+function(lzr_link_mqtt service)
+    target_link_libraries(${service} PRIVATE mosquitto)
+endfunction()
+
 # Link Qt5 library to specified service
 function(lzr_link_qt service)
     find_package(Qt5 COMPONENTS Core Mqtt Qml Quick QuickControls2 LinguistTools WebSockets REQUIRED)

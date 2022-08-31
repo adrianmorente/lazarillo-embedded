@@ -6,7 +6,7 @@
 
 namespace messages
 {
-class EventConnectionStatus : public BaseMessage
+class EventConnectionStatus : public IBaseMessage
 {
 public:
     // Unique name of the message
@@ -25,7 +25,7 @@ public:
     serialization::Serializer &
         serializePayload(serialization::Serializer &p_serializer) const final
     {
-        BaseMessage::serializePayload(p_serializer);
+        IBaseMessage::serializePayload(p_serializer);
         return p_serializer.add("Status", m_status);
     }
 
