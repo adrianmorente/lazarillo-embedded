@@ -9,7 +9,7 @@ log_path=$(echo ${PROJECT_DIR}/log)
 mkdir -p $log_path
 
 docker run -it --rm \
-    --privileged=true \
+    --network lazarillo-network \
+    --add-host
     -e DISPLAY=$DISPLAY \
     --name lazarillo_embedded_test \
-    --add-host mosquitto-service:127.0.0.1 \

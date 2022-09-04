@@ -1,7 +1,7 @@
 #ifndef MESSAGES_DEFINITION_INC_EVENT_CONNECTION_STATUS_H
 #define MESSAGES_DEFINITION_INC_EVENT_CONNECTION_STATUS_H
 
-#include "base_message.h"
+#include "i_base_message.h"
 #include "models/connection_status.h"
 
 namespace messages
@@ -10,7 +10,7 @@ class EventConnectionStatus : public IBaseMessage
 {
 public:
     // Unique name of the message
-    static constexpr char const *name{"EVENT_CONNECTION_STATUS"};
+    static constexpr char const *NAME{"EVENT_CONNECTION_STATUS"};
 
     explicit EventConnectionStatus(models::ConnectionStatus p_status)
         : m_status{p_status}
@@ -29,7 +29,7 @@ public:
         return p_serializer.add("Status", m_status);
     }
 
-    std::string name() const final { return name; }
+    std::string name() const final { return NAME; }
 
 private:
     // Status of the network connection

@@ -1,20 +1,26 @@
 #ifndef SERIALIZATION_INC_DESERIALIZER_H
 #define SERIALIZATION_INC_DESERIALIZER_H
 
-#include "i_serializer.h"
+#include <jsoncpp/json/json.h>
 
 namespace serialization
 {
 /**
  *
  */
-class Deserializer : public ISerializer
+class Deserializer
 {
 public:
     /**
      * Construct a new Deserializer object
      */
     Deserializer();
+
+    Deserializer &setObject(std::string const &p_value);
+
+    std::string object() const;
+
+    template<typename Type> Type extract(std::string const &p_key);
 
     /**
      * Extracts the specified key from the json. Key is removed from the json
@@ -30,6 +36,9 @@ public:
      */
     template<typename Value>
     Deserializer &extract(std::string const &p_key, Value const &p_value);
+
+private:
+    Json::Value m_value;
 };
 } // namespace serialization
 

@@ -6,6 +6,13 @@ using serialization::Deserializer;
 
 Deserializer::Deserializer() {}
 
+template<typename Type> Type Deserializer::extract(std::string const &p_key)
+{
+    Type value{};
+    extract(p_key, value);
+    return value;
+}
+
 template<typename Value>
 Deserializer &Deserializer::extract(std::string const &p_key,
                                     Value const &p_value)

@@ -3,5 +3,5 @@
 int main(int argc, char *argv[])
 {
     lzr::hmi::Service service(argc, argv);
-    service.run();
+    return service.run();
 }

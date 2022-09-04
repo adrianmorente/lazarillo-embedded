@@ -1,8 +1,11 @@
 #ifndef SERVICE_BASE_INC_SERVICE_BASE_H
 #define SERVICE_BASE_INC_SERVICE_BASE_H
 
-#include "messaging-broker/broker.h"
-#include "messaging-broker/i_msg_receiver.h"
+#include "service_messager.h"
+
+#include "messages-definition/i_base_message.h"
+#include "messaging-broker/pubsub/msg_publisher.h"
+#include "messaging-broker/pubsub/msg_subscriber.h"
 
 #include <string>
 
@@ -24,9 +27,11 @@ public:
     virtual void init() = 0;
 
     /**
-     * Runs the service blocking until ending
+     * Runs the service blocking until ending.
+     *
+     * @return exit code of the service
      */
-    void run();
+    int run();
 
     /**
      * Abstract run method called by @ref run(). Intended to be implemented by
@@ -42,13 +47,14 @@ public:
     /**
      * @copydoc Broker::publish
      */
-    bool publish(std::string const &p_topic, std::string const &p_message);
+    bool publish(std::string const &p_topic,
+                 messages::IBaseMessage const &p_message);
 
     /**
      * @copydoc Broker::subscribe
      */
-    bool subscribe(std::string const &p_topic, std::string const &p_message,
-                   std::shared_ptr<msg::IMsgReceiver> p_receiver);
+    void subscribe(std::string const &p_topic, std::string const &p_message,
+                   std::shared_ptr<msg::IBaseMessageReceiver> p_receiver);
 
 private:
     /**
@@ -58,7 +64,7 @@ private:
     void init_messaging();
 
     // Messaging broker. Allows to publish and to subscribe to messages
-    messages::Broker m_broker{"localhost", 1883};
+    std::shared_ptr<ServiceMessager> m_messager;
 };
 } // namespace service
 } // namespace lzr

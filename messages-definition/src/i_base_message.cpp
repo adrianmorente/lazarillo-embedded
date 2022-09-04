@@ -10,15 +10,19 @@ void IBaseMessage::setHeader(MessageHeader const &p_header)
 
 MessageHeader IBaseMessage::getHeader() const
 {
-    MessageHeader header;
-
     // If no header is defined, the default one is returned
-    header.name = (m_header) ? m_header.get()->name : header.name;
+    return (m_header) ? *m_header : getDefaultHeader();
+}
+
+MessageHeader IBaseMessage::getDefaultHeader() const
+{
+    MessageHeader header;
+    header.name = name();
     return header;
 }
 
-serialization::Serializer &
-    IBaseMessage::serializePayload(serialization::Serializer &p_serializer) const
+serialization::Serializer &IBaseMessage::serializePayload(
+    serialization::Serializer &p_serializer) const
 {
     return p_serializer;
 }

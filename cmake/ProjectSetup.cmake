@@ -48,25 +48,23 @@ macro(lzr_setup_qt)
     set(Qt5Quick_DIR          "/usr/local/Qt-5.15.5/lib/cmake/Qt5Quick")
     set(Qt5QuickControls2_DIR "/usr/local/Qt-5.15.5/lib/cmake/Qt5QuickControls2")
     set(Qt5LinguistTools_DIR  "/usr/local/Qt-5.15.5/lib/cmake/Qt5LinguistTools")
-    set(Qt5Mqtt_DIR           "/usr/local/Qt-5.15.5/lib/cmake/Qt5Mqtt")
     set(Qt5Network_DIR        "/usr/local/Qt-5.15.5/lib/cmake/Qt5Network")
     set(Qt5WebSockets_DIR     "/usr/local/Qt-5.15.5/lib/cmake/Qt5WebSockets")
     set(QT_QMAKE_EXECUTABLE   "/usr/local/Qt-5.15.5/bin/qmake")
 endmacro(lzr_setup_qt)
 
-# Link mosquitto dependency to specified service
-function(lzr_link_mqtt service)
-    target_link_libraries(${service} PRIVATE mosquitto)
+# Link Redis dependency to specified service
+function(lzr_link_redis service)
+    target_link_libraries(${service} PRIVATE hiredis)
 endfunction()
 
 # Link Qt5 library to specified service
 function(lzr_link_qt service)
-    find_package(Qt5 COMPONENTS Core Mqtt Qml Quick QuickControls2 LinguistTools WebSockets REQUIRED)
+    find_package(Qt5 COMPONENTS Core Qml Quick QuickControls2 LinguistTools WebSockets REQUIRED)
 
     target_include_directories(${service} PRIVATE ${QT5_INCLUDE_DIR})
     target_link_libraries(${service} PRIVATE
         Qt5::Core
-        Qt5::Mqtt
         Qt5::Qml
         Qt5::Quick
         Qt5::QuickControls2
@@ -77,6 +75,14 @@ endfunction()
 # Link systemd library for the requested target
 function(lzr_link_systemd service)
     target_link_libraries(${service} PRIVATE systemd)
+endfunction()
+
+# Link jsoncpp library to service
+function(lzr_link_json service)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(JSONCPP jsoncpp)
+    link_libraries(${JSONCPP_LIBRARIES})
+    target_link_libraries(${service} PRIVATE ${JSONCPP_LIBRARIES})
 endfunction()
 
 # Creates the service file into the target device

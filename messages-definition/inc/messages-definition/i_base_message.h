@@ -26,7 +26,7 @@ public:
      * Destroy the Base Message object
      *
      */
-    virtual ~IBaseMessage() = 0;
+    ~IBaseMessage() {}
 
     /**
      * Returns the unique name of the implemented message
@@ -48,6 +48,13 @@ public:
      * @return MessageHeader
      */
     MessageHeader getHeader() const;
+
+    /**
+     * Get the Default Header object (if no header has been set)
+     *
+     * @return MessageHeader
+     */
+    MessageHeader getDefaultHeader() const;
 
     /**
      * Serializes the internal payload of the message.

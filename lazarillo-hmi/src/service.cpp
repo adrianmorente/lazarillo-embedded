@@ -1,6 +1,9 @@
 #include "lazarillo-hmi/service.h"
 
 #include "lazarillo-hmi/utils/style.h"
+#include "message_receivers/event_reboot_receiver.h"
+
+#include "topics/topics.h"
 
 #include <QLocale>
 #include <QObject>
@@ -10,6 +13,7 @@
 
 using lzr::hmi::Service;
 using lzr::utils::Style;
+using namespace messages::topics;
 
 Service::Service(int argc, char *argv[])
 {
@@ -47,7 +51,13 @@ std::string Service::get_name()
     return "lazarillo-hmi";
 }
 
-void Service::init() {}
+void Service::init()
+{
+    auto event_reboot_receiver =
+        std::make_shared<lzr::hmi::EventRebootReceiver>();
+    subscribe(WEB_GATEWAY_EVENT_TOPIC, messages::EventReboot::NAME,
+              event_reboot_receiver);
+}
 
 int Service::run_internal()
 {

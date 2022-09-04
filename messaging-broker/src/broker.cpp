@@ -1,158 +1,137 @@
 #include "messaging-broker/broker.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 
 using lzr::msg::Broker;
 
-/**
- * Callback triggered when the connection is performed.
- *
- * @param p_mosq
- * @param p_obj
- * @param p_code
- */
-void on_connect(struct mosquitto *p_mosq, void *p_obj, int p_code)
+using namespace std::literals::chrono_literals;
+
+constexpr struct timeval TIMEOUT_CMD = {0, 5000L};
+constexpr auto TIMEOUT_PING{5000ms};
+constexpr auto TIMEOUT_TRY_CONNECTION{100ms};
+
+bool cmdRedis(redisContext *const p_context, std::string const &p_command,
+              std::mutex &p_mutex)
 {
-    // Early exit
-    if (!p_obj)
+    bool result{false};
+    std::lock_guard<std::mutex> lock{p_mutex};
+
+    auto reply = redisCommand(p_context, p_command.c_str());
+
+    // redisCommand returns NULL when there's an error
+    if (reply != nullptr)
     {
-        return;
+        freeReplyObject(reply);
+        result = true;
     }
 
-    if (p_code == 0)
-    {
-        auto handler = static_cast<Broker *>(p_obj);
-        handler->set_connection_accepted();
-        return;
-    }
-
-    mosquitto_disconnect(p_mosq);
+    return result;
 }
 
-/**
- * Callback triggered when a message is received.
- *
- * @param p_mosq
- * @param p_obj
- * @param p_message
- * @param p_props
- */
-void on_message(struct mosquitto *p_mosq, void *p_obj,
-                const struct mosquitto_message *p_message,
-                const mosquitto_property *p_props)
+Broker::Broker()
 {
-    (void)p_mosq;
-    (void)p_props;
-
-    if (!p_obj)
-        return;
-
-    auto handler = static_cast<Broker *>(p_obj);
-    std::string payload{static_cast<char *>(p_message->payload),
-                        static_cast<char *>(p_message->payload) +
-                            p_message->payloadlen};
-    handler->set_message_received(p_message->topic, payload);
+    m_thread_ping    = std::thread([this]() { thread_keep_alive(); });
+    m_thread_connect = std::thread([this]() { thread_connect(); });
+    m_thread_receive = std::thread([this]() { thread_watch_messages(); });
 }
 
-Broker::Broker(std::string const &p_client_id, std::string const &p_host,
-               unsigned const p_port)
-    : m_client_id{p_client_id}
-    , m_host{p_host}
-    , m_port{p_port}
+Broker::~Broker()
 {
-    m_handler = mosquitto_new(p_client_id.c_str(), false, this);
+    m_running = false;
+    m_cv_running.notify_all();
 
-    if (!m_handler)
+    auto join_thread = [](std::thread &thread)
     {
-        std::cout << "Error while creating broker for client " << p_client_id
-                  << "." << std::endl;
-        throw std::logic_error{"Error while creating broker\n"};
-    }
+        if (thread.joinable())
+        {
+            thread.join();
+        }
+    };
 
-    mosquitto_connect_callback_set(m_handler, on_connect);
-    mosquitto_message_v5_callback_set(m_handler, on_message);
+    join_thread(m_thread_ping);
+    join_thread(m_thread_connect);
+    join_thread(m_thread_receive);
 }
 
-bool Broker::connect()
+std::shared_future<bool>
+    Broker::connect_async(std::chrono::milliseconds const p_timeout)
 {
-    auto result = mosquitto_connect_bind_v5(
-        m_handler, m_host.c_str(), m_port, m_timeout.count(), nullptr, nullptr);
-
-    if (result != MOSQ_ERR_SUCCESS)
+    if (m_promise_connection_performed == nullptr)
     {
-        std::cout << "Error: mosquitto_connect_bind_v5 failed." << std::endl;
-        return false;
+        // Check timeout to keep trying or not
+        m_try_to_connect_no_timeout = (p_timeout == 0s);
+        m_timeout_trying_connection = p_timeout;
+
+        auto promise                   = std::make_unique<std::promise<bool>>();
+        m_future_connection_performed  = promise->get_future().share();
+        m_promise_connection_performed = std::move(promise);
     }
 
-    if (mosquitto_loop_start(m_handler) != MOSQ_ERR_SUCCESS)
-    {
-        mosquitto_reinitialise(m_handler, m_client_id.c_str(), false, this);
-        mosquitto_connect_callback_set(m_handler, on_connect);
-        mosquitto_message_v5_callback_set(m_handler, on_message);
-
-        std::cout << "Error initialising MQTT connection with credentials."
-                  << std::endl;
-        return false;
-    }
-
-    // Wait until the connection is established
-    std::unique_lock<std::mutex> lock(m_connected_mutex);
-    auto connected = m_connection_accepted.wait_for(
-        lock, m_timeout, [this] { return m_connected.load(); });
-
-    return connected;
+    return m_future_connection_performed;
 }
 
-bool Broker::disconnect()
+std::shared_future<bool> Broker::disconnect_async()
 {
-    if (!m_connected)
-    {
-        std::cout << "Broker already disconnected." << std::endl;
-        return true;
-    }
+    set_status(RedisStatus::DISCONNECTING);
 
-    if (mosquitto_loop_stop(m_handler, true) != MOSQ_ERR_SUCCESS)
-    {
-        std::cout << "Couldn't disconnect from server." << std::endl;
-        return false;
-    }
+    m_promise_connection_performed = nullptr;
 
-    if (mosquitto_disconnect(m_handler) != MOSQ_ERR_SUCCESS)
-    {
-        std::cout << "Couldn't disconnect from server." << std::endl;
-        return false;
-    }
+    set_status(RedisStatus::NONE);
 
-    std::cout << "Broker successfully disconnected." << std::endl;
-    m_connected = false;
-
-    return true;
+    auto promise           = std::make_unique<std::promise<bool>>();
+    auto future_disconnect = promise->get_future().share();
+    promise->set_value(true);
+    return future_disconnect;
 }
 
 bool Broker::subscribe(std::string const &p_topic)
 {
-    if (!m_connected)
+    std::lock_guard<std::mutex> lock{m_receivers_mutex};
+    bool result{false};
+
+    if (is_connected() && !topic_exists(p_topic))
     {
-        return false;
+        std::string const command = "SUBSCRIBE " + p_topic;
+        result = cmdRedis(m_sub_handler.get(), command, m_sub_mutex);
+
+        if (result)
+        {
+            m_topics.emplace_back(p_topic);
+        }
     }
 
-    return (mosquitto_subscribe_v5(m_handler, nullptr, p_topic.c_str(), 0, 0,
-                                   nullptr) == MOSQ_ERR_SUCCESS);
+    return result;
 }
 
 bool Broker::unsubscribe(std::string const &p_topic)
 {
-    return (mosquitto_unsubscribe_v5(m_handler, nullptr, p_topic.c_str(),
-                                     nullptr) == MOSQ_ERR_SUCCESS);
+    std::lock_guard<std::mutex> lock{m_receivers_mutex};
+    bool result{false};
+
+    if (is_connected() && topic_exists(p_topic))
+    {
+        std::string const command = "UNSUBSCRIBE " + p_topic;
+        result = cmdRedis(m_sub_handler.get(), command, m_sub_mutex);
+
+        if (result)
+        {
+            m_topics.erase(
+                std::find(m_topics.begin(), m_topics.end(), p_topic));
+        }
+    }
+
+    return result;
 }
 
 void Broker::add_receiver(std::string const &p_callback,
-                          std::shared_ptr<IMsgReceiver> p_receiver)
+                          std::shared_ptr<RedisReceiver> p_receiver)
 {
     std::lock_guard<std::mutex> lock{m_receivers_mutex};
 
     // Can't register twice the same callback
-    if (m_receivers.find(p_callback) != m_receivers.cend())
+    if (m_receivers.find(p_callback) == m_receivers.cend())
     {
         return;
     }
@@ -175,31 +154,231 @@ void Broker::remove_receiver(std::string const &p_callback)
 
 bool Broker::publish(std::string const &p_topic, std::string const &p_message)
 {
-    if (!m_connected)
+    bool result{false};
+
+    if (m_pub_handler && is_connected())
     {
-        std::cout
-            << "Couldn't publish message since connection is not established."
-            << std::endl;
-        return false;
+        std::lock_guard<std::mutex> lock{m_pub_mutex};
+
+        std::string const command{"PUBLISH " + p_topic + " " + p_message};
+        result = cmdRedis(m_pub_handler.get(), command, m_pub_mutex);
     }
 
-    auto const result = mosquitto_publish_v5(
-        m_handler, nullptr, p_topic.c_str(), p_message.size(),
-        p_message.c_str(), 0, false, nullptr);
-
-    return (result == MOSQ_ERR_SUCCESS);
+    return result;
 }
 
-void Broker::set_connection_accepted()
+void Broker::thread_keep_alive()
 {
-    m_connected = true;
-    m_connection_accepted.notify_one();
+    while (m_running)
+    {
+        if (m_pub_handler && is_connected())
+        {
+            cmdRedis(m_pub_handler.get(), "PING", m_pub_mutex);
+
+            if (m_pub_handler->err != 0)
+            {
+                set_status(RedisStatus::ERROR);
+                connect_async();
+            }
+        }
+
+        wait_with_condition(TIMEOUT_PING);
+    }
 }
 
-void Broker::set_message_received(std::string const &p_topic,
-                                  std::string const &p_message)
+void Broker::thread_connect()
 {
-    // Iterate over list of receivers to notify about received message
+    while (m_running)
+    {
+        if (m_try_to_connect_no_timeout)
+        {
+            perform_connection();
+        }
+        else
+        {
+            std::chrono::milliseconds time_to_retry{
+                m_timeout_trying_connection};
+            if (time_to_retry > 0ms)
+            {
+                time_to_retry -= TIMEOUT_TRY_CONNECTION;
+                m_timeout_trying_connection = time_to_retry;
+                perform_connection();
+            }
+            else
+            {
+                m_promise_connection_performed = nullptr;
+            }
+        }
+
+        wait_with_condition(TIMEOUT_TRY_CONNECTION);
+    }
+}
+
+void Broker::thread_watch_messages()
+{
+    while (m_running)
+    {
+        std::this_thread::sleep_for(10ms);
+
+        if (m_sub_handler != nullptr && is_connected())
+        {
+            read_from_redis();
+        }
+        else
+        {
+            wait_with_condition(1000ms);
+        }
+    }
+}
+
+bool Broker::topic_exists(std::string const &p_topic) const
+{
+    auto const topic_it =
+        std::find(m_topics.cbegin(), m_topics.cend(), p_topic);
+    return (topic_it != m_topics.cend());
+}
+
+bool Broker::is_connected() const
+{
+    return (m_status == RedisStatus::CONNECTED);
+}
+
+void Broker::wait_with_condition(std::chrono::milliseconds p_timeout)
+{
+    std::unique_lock<std::mutex> lock(m_cv_running_mutex);
+    m_cv_running.wait_for(lock, p_timeout);
+}
+
+void Broker::perform_connection()
+{
+    if (m_status == RedisStatus::CONNECTING ||
+        m_status == RedisStatus::CONNECTED)
+    {
+        return;
+    }
+
+    // Change status to CONNECTING during performance of connection
+    set_status(RedisStatus::CONNECTING, "Starting performance of connection.");
+
+    // Lambda function for both pub and sub contexts
+    auto handle_context = [this](redisContext &p_context, std::mutex &p_mutex)
+    {
+        // First condition group: try connection
+        if (p_context == nullptr)
+        {
+            std::lock_guard<std::mutex> lock{p_mutex};
+            p_context = redisContext{
+                redisConnectWithTimeout(m_host.c_str(), m_port, TIMEOUT_CMD)};
+        }
+        else
+        {
+            std::lock_guard<std::mutex> lock{p_mutex};
+            redisReconnect(p_context.get());
+        }
+
+        // Second condition group: connection failed
+        if (p_context == nullptr || p_context->err)
+        {
+            std::string const msg{"Error: connection to Redis failed."};
+            set_status(RedisStatus::ERROR, msg);
+            std::cout << msg << std::endl;
+        }
+    };
+
+    handle_context(m_pub_handler, m_pub_mutex);
+    handle_context(m_sub_handler, m_sub_mutex);
+
+    // Subscription to topics
+    {
+        std::lock_guard<std::mutex> lock{m_topics_mutex};
+        for (auto const &topic : m_topics)
+        {
+            std::string const command = "SUBSCRIBE " + topic;
+            cmdRedis(m_sub_handler.get(), command, m_sub_mutex);
+        }
+    }
+
+    set_status(RedisStatus::CONNECTED, "Finish performance of connection.");
+
+    if (m_promise_connection_performed != nullptr)
+    {
+        m_promise_connection_performed->set_value(true);
+        m_promise_connection_performed = nullptr;
+    }
+}
+
+void Broker::set_status(RedisStatus const p_status,
+                        std::string const &p_description)
+{
+    std::lock_guard<std::mutex> lock{m_status_mutex};
+    auto previous = m_status;
+    m_status      = p_status;
+
+    std::cout << "Changed Redis status from " << status_as_string(previous)
+              << " to " << status_as_string(m_status)
+              << ". Description: " << p_description << std::endl;
+
+    // If it wasn't connected but it is now, notify
+    if (previous != RedisStatus::CONNECTED &&
+        m_status == RedisStatus::CONNECTED)
+    {
+        m_cv_running.notify_all();
+    }
+}
+
+std::string Broker::status_as_string(RedisStatus const p_status)
+{
+    std::string status{""};
+
+    switch (p_status)
+    {
+    case RedisStatus::NONE: status = "NONE"; break;
+    case RedisStatus::CONNECTING: status = "CONNECTING"; break;
+    case RedisStatus::CONNECTED: status = "CONNECTED"; break;
+    case RedisStatus::DISCONNECTING: status = "DISCONNECTING"; break;
+    case RedisStatus::ERROR: status = "ERROR"; break;
+    }
+
+    return status;
+}
+
+void Broker::read_from_redis()
+{
+    redisReply *redis_reply = nullptr;
+    int reply_int{REDIS_ERR};
+
+    {
+        std::lock_guard<std::mutex> lock{m_sub_mutex};
+        redisSetTimeout(m_sub_handler.get(), TIMEOUT_CMD);
+        reply_int = redisGetReply(m_sub_handler.get(),
+                                  reinterpret_cast<void **>(&redis_reply));
+    }
+
+    // Redis subscribed-to messages contains the topic on one index and the
+    // message on another
+    constexpr auto TOPIC_INDEX{1U};
+    constexpr auto MESSAGE_INDEX{2U};
+
+    switch (reply_int)
+    {
+    case REDIS_ERR: break;
+    case REDIS_OK:
+        auto const &topic           = redis_reply->element[TOPIC_INDEX];
+        std::string const topic_str = std::string{topic->str, topic->len};
+
+        auto const &message           = redis_reply->element[MESSAGE_INDEX];
+        std::string const message_str = std::string{message->str, message->len};
+
+        loop_on_receive(topic_str, message_str);
+        break;
+    }
+}
+
+void Broker::loop_on_receive(std::string const &p_topic,
+                             std::string const &p_message) const
+{
+    std::lock_guard<std::mutex> lock{m_receivers_mutex};
+
     for (auto const &receiver : m_receivers)
     {
         receiver.second->on_receive(p_topic, p_message);

@@ -6,6 +6,12 @@
 #include <QWebSocket>
 #include <QWebSocketServer>
 
+/**
+ * Wrapper of a Qt's framework Websocket server class.
+ *
+ * Allows to hold a WS server and to receive the corresponding signals without
+ * having to implement all the protocol logic.
+ */
 class WebsocketServer : public QObject
 {
     Q_OBJECT

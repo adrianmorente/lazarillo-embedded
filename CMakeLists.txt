@@ -28,7 +28,7 @@ set(MODULE_LIST
   # motor-manager
   serialization
   service-base
-  web-gateway
+  # web-gateway
 )
 
 foreach (target ${MODULE_LIST})

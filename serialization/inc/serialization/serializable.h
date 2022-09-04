@@ -11,11 +11,6 @@ namespace serialization
 class Serializable
 {
     /**
-     * Destroy the Serializable object
-     */
-    virtual ~Serializable() = 0;
-
-    /**
      * Serializes the object using the Serializer object.
      *
      * @param p_serializer

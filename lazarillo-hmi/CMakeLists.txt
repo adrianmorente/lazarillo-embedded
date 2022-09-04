@@ -9,6 +9,8 @@ set(_include_dir inc/lazarillo-hmi)
 set(PROJECT_SOURCES
   ${_include_dir}/utils/style.h
   ${_include_dir}/service.h
+  src/message_receivers/event_reboot_receiver.cpp
+  src/message_receivers/event_reboot_receiver.h  
   src/utils/style.cpp
   src/main.cpp
   src/service.cpp
@@ -29,5 +31,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
   messages-definition
+  messaging-broker
+  serialization
   service-base
 )
