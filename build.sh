@@ -8,7 +8,7 @@ CWD=`pwd`
 # Show help information and how-to run
 print_help()
 {
-    echo "Build script for Lazarillo software"
+    echo "Build script for Lazarillo Embedded software"
     echo
     echo "Syntax: ./build.sh args"
     echo "args:"
