@@ -3,7 +3,7 @@
 using lzr::web::Service;
 
 Service::Service(int argc, char *argv[])
-    : m_server{new WebsocketServer(8080)}
+    : m_server{new WebsocketServer(8080, this)}
     , m_app{new QCoreApplication(argc, argv)}
 {
 }
@@ -23,8 +23,6 @@ void Service::init() {}
 
 int Service::run_internal()
 {
-    // QObject::connect(server, &WebsocketServer::closed, &a,
-    // &QCoreApplication::quit);
     return m_app->exec();
 }
 
